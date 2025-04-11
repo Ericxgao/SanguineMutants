@@ -944,7 +944,6 @@ void SanguineModuleWidget::makePanel() {
 	}
 
 	std::string backplateFileName = "res/backplate_" + panelSizeStrings[panelSize] + backplateColorStrings[themeBackplateColor] + ".svg";
-	// std::string backplateFileName = "SanguineMutants/backplate_" + panelSizeStrings[panelSize] + backplateColorStrings[themeBackplateColor] + ".png";
 
 	std::string faceplateFileName = "res/" + moduleName;
 
@@ -959,13 +958,11 @@ void SanguineModuleWidget::makePanel() {
 	#ifdef METAMODULE
 	SvgWidget* overlay = createWidget<SvgWidget>(Vec(0, 0));
 	overlay->setSvg(Svg::load(asset::plugin(pluginInstance, faceplateFileName)));
-	// overlay->setSvg(APP->window->loadSvg("SanguineMutants/" + moduleName + "_faceplate.png"));
 	addChild(overlay);
 	setPanel(panel);
 	if (bHasCommon) {
 		SvgWidget* overlay = createWidget<SvgWidget>(Vec(0, 0));
  		overlay->setSvg(APP->window->loadSvg(asset::plugin(pluginInstance, "res/" + moduleName + "_common.svg")));
- 		// overlay->setSvg(APP->window->loadSvg("SanguineMutants/" + moduleName + "_common.png"));
  		addChild(overlay);
 	}
 	#else
