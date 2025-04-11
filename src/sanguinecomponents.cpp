@@ -859,9 +859,12 @@ SanguineMutantsLogoLight::SanguineMutantsLogoLight(Module* theModule, const floa
 
 SanguinePanel::SanguinePanel(const std::string& newBackgroundFileName, const std::string& newForegroundFileName) {
 	setBackground(Svg::load(asset::plugin(pluginInstance, newBackgroundFileName)));
+#ifndef METAMODULE
+	// MetaModule: add the foreground panel as a SvgWidget later, not here
 	foreground = new SvgWidget();
 	foreground->setSvg(Svg::load(asset::plugin(pluginInstance, newForegroundFileName)));
 	fb->addChildBelow(foreground, panelBorder);
+#endif
 }
 
 void SanguinePanel::addLayer(const std::string& layerFileName) {
@@ -941,6 +944,7 @@ void SanguineModuleWidget::makePanel() {
 	}
 
 	std::string backplateFileName = "res/backplate_" + panelSizeStrings[panelSize] + backplateColorStrings[themeBackplateColor] + ".svg";
+	// std::string backplateFileName = "SanguineMutants/backplate_" + panelSizeStrings[panelSize] + backplateColorStrings[themeBackplateColor] + ".png";
 
 	std::string faceplateFileName = "res/" + moduleName;
 
@@ -951,11 +955,17 @@ void SanguineModuleWidget::makePanel() {
 	faceplateFileName += faceplateThemeStrings[faceplateTheme] + ".svg";
 
 	SanguinePanel* panel = new SanguinePanel(backplateFileName, faceplateFileName);
+
 	#ifdef METAMODULE
+	SvgWidget* overlay = createWidget<SvgWidget>(Vec(0, 0));
+	overlay->setSvg(Svg::load(asset::plugin(pluginInstance, faceplateFileName)));
+	// overlay->setSvg(APP->window->loadSvg("SanguineMutants/" + moduleName + "_faceplate.png"));
+	addChild(overlay);
 	setPanel(panel);
 	if (bHasCommon) {
 		SvgWidget* overlay = createWidget<SvgWidget>(Vec(0, 0));
  		overlay->setSvg(APP->window->loadSvg(asset::plugin(pluginInstance, "res/" + moduleName + "_common.svg")));
+ 		// overlay->setSvg(APP->window->loadSvg("SanguineMutants/" + moduleName + "_common.png"));
  		addChild(overlay);
 	}
 	#else
