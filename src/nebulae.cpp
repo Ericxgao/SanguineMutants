@@ -440,7 +440,7 @@ struct Nebulae : SanguineModule {
 				bLastFrozen = bDisplaySwitched;
 			}
 
-			int currentLight = 0;
+			float lightBrightness = 0.f;
 			switch (ledMode) {
 			case cloudyCommon::LEDS_INPUT:
 			case cloudyCommon::LEDS_OUTPUT:
@@ -448,8 +448,9 @@ struct Nebulae : SanguineModule {
 				lights[LIGHT_BLEND + 1].setBrightness(0.f);
 				lights[LIGHT_SPREAD].setBrightness(vuMeter.getBrightness(-18.f, -12.f));
 				lights[LIGHT_SPREAD + 1].setBrightness(0.f);
-				lights[LIGHT_FEEDBACK].setBrightness(vuMeter.getBrightness(-12.f, -6.f));
-				lights[LIGHT_FEEDBACK + 1].setBrightness(vuMeter.getBrightness(-12.f, -6.f));
+				lightBrightness = vuMeter.getBrightness(-12.f, -6.f);
+				lights[LIGHT_FEEDBACK].setBrightness(lightBrightness);
+				lights[LIGHT_FEEDBACK + 1].setBrightness(lightBrightness);
 				lights[LIGHT_REVERB].setBrightness(0.f);
 				lights[LIGHT_REVERB + 1].setBrightness(vuMeter.getBrightness(-6.f, 0.f));
 				break;
@@ -458,7 +459,7 @@ struct Nebulae : SanguineModule {
 			case cloudyCommon::LEDS_MOMENTARY:
 				for (int light = 0; light < 4; ++light) {
 					float value = params[PARAM_BLEND + light].getValue();
-					currentLight = LIGHT_BLEND + light * 2;
+					int currentLight = LIGHT_BLEND + light * 2;
 					lights[currentLight + 0].setBrightness(value <= 0.66f ?
 						math::rescale(value, 0.f, 0.66f, 0.f, 1.f) : math::rescale(value, 0.67f, 1.f, 1.f, 0.f));
 					lights[currentLight + 1].setBrightness(value >= 0.33f ?
@@ -468,25 +469,25 @@ struct Nebulae : SanguineModule {
 
 			case cloudyCommon::LEDS_QUALITY_MOMENTARY:
 				lights[LIGHT_BLEND].setBrightness(0.f);
-				lights[LIGHT_BLEND + 1].setBrightness((params[PARAM_HI_FI].getValue() > 0 &&
-					params[PARAM_STEREO].getValue() > 0) ? 1.f : 0.f);
+				lights[LIGHT_BLEND + 1].setBrightness(static_cast<bool>(params[PARAM_HI_FI].getValue()) &&
+					static_cast<bool>(params[PARAM_STEREO].getValue()));
 				lights[LIGHT_SPREAD].setBrightness(0.f);
-				lights[LIGHT_SPREAD + 1].setBrightness((params[PARAM_HI_FI].getValue() > 0 &&
-					params[PARAM_STEREO].getValue() < 1) ? 1.f : 0.f);
+				lights[LIGHT_SPREAD + 1].setBrightness(static_cast<bool>(params[PARAM_HI_FI].getValue()) &&
+					!(static_cast<bool>(params[PARAM_STEREO].getValue())));
 				lights[LIGHT_FEEDBACK].setBrightness(0.f);
-				lights[LIGHT_FEEDBACK + 1].setBrightness((params[PARAM_HI_FI].getValue() < 1 &&
-					params[PARAM_STEREO].getValue() > 0) ? 1.f : 0.f);
+				lights[LIGHT_FEEDBACK + 1].setBrightness(!(static_cast<bool>(params[PARAM_HI_FI].getValue())) &&
+					static_cast<bool>(params[PARAM_STEREO].getValue()));
 				lights[LIGHT_REVERB].setBrightness(0.f);
-				lights[LIGHT_REVERB + 1].setBrightness((params[PARAM_HI_FI].getValue() < 1 &&
-					params[PARAM_STEREO].getValue() < 1) ? 1.f : 0.f);
+				lights[LIGHT_REVERB + 1].setBrightness(!(static_cast<bool>(params[PARAM_HI_FI].getValue())) &&
+					!(static_cast<bool>(params[PARAM_STEREO].getValue())));
 				break;
 
 			case cloudyCommon::LEDS_MODE_MOMENTARY:
 				for (int light = 0; light < clouds::PLAYBACK_MODE_LAST; ++light) {
-					currentLight = LIGHT_BLEND + light * 2;
+					int currentLight = LIGHT_BLEND + light * 2;
 
-					lights[currentLight + 0].setBrightness(playbackMode == light ? 1.f : 0.f);
-					lights[currentLight + 1].setBrightness(playbackMode == light ? 1.f : 0.f);
+					lights[currentLight + 0].setBrightness(static_cast<float>(playbackMode == light));
+					lights[currentLight + 1].setBrightness(static_cast<float>(playbackMode == light));
 				}
 				break;
 			}

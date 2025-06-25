@@ -418,12 +418,15 @@ struct Nodi : SanguineModule {
 
 			pollSwitches(sampleTime);
 
+			if (displayChannel >= channelCount) {
+				displayChannel = channelCount - 1;
+			}
+
 			// Handle model light.
 			if (!bPaques) {
-				int currentModel = settings[0].shape;
-				lights[LIGHT_MODEL + 0].setBrightnessSmooth(nodi::lightColors[currentModel].red, sampleTime);
-				lights[LIGHT_MODEL + 1].setBrightnessSmooth(nodi::lightColors[currentModel].green, sampleTime);
-				lights[LIGHT_MODEL + 2].setBrightnessSmooth(nodi::lightColors[currentModel].blue, sampleTime);
+				lights[LIGHT_MODEL + 0].setBrightnessSmooth(nodi::lightColors[settings[displayChannel].shape].red, sampleTime);
+				lights[LIGHT_MODEL + 1].setBrightnessSmooth(nodi::lightColors[settings[displayChannel].shape].green, sampleTime);
+				lights[LIGHT_MODEL + 2].setBrightnessSmooth(nodi::lightColors[settings[displayChannel].shape].blue, sampleTime);
 			} else {
 				lights[LIGHT_MODEL + 0].setBrightnessSmooth(nodi::lightColors[47].red, sampleTime);
 				lights[LIGHT_MODEL + 1].setBrightnessSmooth(nodi::lightColors[47].green, sampleTime);
@@ -431,10 +434,10 @@ struct Nodi : SanguineModule {
 			}
 
 			for (int channel = 0; channel < PORT_MAX_CHANNELS; ++channel) {
-				int currentLight = LIGHT_CHANNEL_MODEL + channel * 3;
+				const int currentLight = LIGHT_CHANNEL_MODEL + channel * 3;
 
 				if (channel < channelCount) {
-					int selectedModel = settings[channel].shape;
+					int selectedModel = bPaques != true ? settings[channel].shape : 47;
 					lights[currentLight + 0].setBrightnessSmooth(nodi::lightColors[selectedModel].red, sampleTime);
 					lights[currentLight + 1].setBrightnessSmooth(nodi::lightColors[selectedModel].green, sampleTime);
 					lights[currentLight + 2].setBrightnessSmooth(nodi::lightColors[selectedModel].blue, sampleTime);
@@ -443,10 +446,6 @@ struct Nodi : SanguineModule {
 						lights[currentLight + light].setBrightnessSmooth(0.f, sampleTime);
 					}
 				}
-			}
-
-			if (displayChannel >= channelCount) {
-				displayChannel = channelCount - 1;
 			}
 		}
 

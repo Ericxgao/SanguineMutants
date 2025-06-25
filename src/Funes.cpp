@@ -7,8 +7,10 @@
 #ifndef METAMODULE
 #include "osdialog.h"
 #include <fstream>
-#endif
 #include <thread>
+#else
+#include "async_filebrowser.hh"
+#endif
 
 #include "plaits/dsp/voice.h"
 #include "plaits/user_data.h"
@@ -520,6 +522,10 @@ struct Funes : SanguineModule {
 				const uint8_t* userDataBuffer = &userDataVector[0];
 				userData.setBuffer(userDataBuffer);
 				if (userDataBuffer[kMaxUserDataSize - 2] == 'U') {
+					for (int channel = 0; channel < PORT_MAX_CHANNELS; ++channel) {
+						voices[channel].ReloadUserData();
+					}
+
 					resetCustomDataStates();
 					customDataStates[userDataBuffer[kMaxUserDataSize - 1] - ' '] = funes::DataCustom;
 				}
@@ -538,17 +544,18 @@ struct Funes : SanguineModule {
 	}
 
 	void loadCustomData(const std::string& filePath) {
-#ifndef METAMODULE
 		bIsLoading = true;
 		DEFER({ bIsLoading = false; });
 		// HACK: Sleep 100us so DSP thread is likely to finish processing before we resize the vector.
+#ifndef METAMODULE
 		std::this_thread::sleep_for(std::chrono::duration<double>(100e-6));
-
+#else
+		// delay_ms(1);
+#endif
 		std::string fileExtension = string::lowercase(system::getExtension(filePath));
 
 		if (fileExtension == ".bin") {
-			std::ifstream input(filePath, std::ios::binary);
-			std::vector<uint8_t> buffer(std::istreambuf_iterator<char>(input), {});
+			std::vector<uint8_t> buffer = system::readFile(filePath);
 			uint8_t* dataBuffer = buffer.data();
 			bool success = userData.Save(dataBuffer, patch.engine);
 			if (success) {
@@ -562,13 +569,15 @@ struct Funes : SanguineModule {
 				errorTimeOut = 4;
 			}
 		}
-#endif
 	}
 
 	void showCustomDataLoadDialog() {
 #ifndef METAMODULE
 #ifndef USING_CARDINAL_NOT_RACK
 		osdialog_filters* filters = osdialog_filters_parse(funes::CUSTOM_DATA_FILENAME_FILTERS);
+
+		DEFER({ osdialog_filters_free(filters); });
+
 		char* dialogFilePath = osdialog_file(OSDIALOG_OPEN, funes::customDataDir.empty() ? NULL : funes::customDataDir.c_str(), NULL, filters);
 
 		if (!dialogFilePath) {
@@ -576,12 +585,12 @@ struct Funes : SanguineModule {
 			return;
 		}
 
-		std::string filePath = dialogFilePath;
+		const std::string filePath = dialogFilePath;
 		std::free(dialogFilePath);
 
 		funes::customDataDir = system::getDirectory(filePath);
 		loadCustomData(filePath);
-#else
+#else // USING_CARDINAL_NOT_RACK
 		async_dialog_filebrowser(false, nullptr, funes::customDataDir.empty() ?
 			nullptr : funes::customDataDir.c_str(), "Load custom data .bin file", [this](char* dialogFilePath) {
 				if (dialogFilePath == nullptr) {
@@ -596,7 +605,24 @@ struct Funes : SanguineModule {
 				loadCustomData(filePath);
 			});
 #endif
-#endif
+#else
+		// TODO: this needs testing!
+		osdialog_filters* filters = osdialog_filters_parse(funes::CUSTOM_DATA_FILENAME_FILTERS);
+
+		DEFER({ osdialog_filters_free(filters); });
+
+		async_osdialog_file(OSDIALOG_OPEN, funes::customDataDir.empty() ? NULL : funes::customDataDir.c_str(), NULL, filters, [this](char* dialogFilePath) {
+			if (!dialogFilePath) {
+				errorTimeOut = 4;
+				return;
+			}
+			const std::string filePath = dialogFilePath;
+			std::free(dialogFilePath);
+
+			funes::customDataDir = system::getDirectory(filePath);
+			loadCustomData(filePath);
+			});
+#endif // METAMODULE
 	}
 
 	void setEngine(int newModelNum) {
@@ -620,6 +646,8 @@ struct Funes : SanguineModule {
 		// Try to wait for DSP to finish.
 #ifndef METAMODULE
 		std::this_thread::sleep_for(std::chrono::duration<double>(100e-6));
+#else
+		// delay_ms(1);
 #endif
 	}
 

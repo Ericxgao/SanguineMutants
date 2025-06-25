@@ -248,27 +248,21 @@ struct Anuli : SanguineModule {
 			for (int channel = 0; channel < PORT_MAX_CHANNELS; ++channel) {
 				const int currentLight = LIGHT_RESONATOR + channel * 3;
 
-				if (channel < channelCount) {
-					for (int light = 0; light < 3; ++light) {
-						LightModes lightMode = anuli::modeLights[channelModes[channel]][light];
-						drawLight(currentLight + light, lightMode, bIsTrianglePulse, sampleTime);
-					}
-				} else {
-					for (int light = 0; light < 3; ++light) {
-						lights[currentLight + light].setBrightnessSmooth(0.f, sampleTime);
-					}
+				for (int light = 0; light < 3; ++light) {
+					LightModes lightMode = anuli::modeLights[channelModes[channel]][light];
+
+					float lightValue = static_cast<float>(channel < channelCount &&
+						(lightMode == LIGHT_ON || (lightMode == LIGHT_BLINK && bIsTrianglePulse)));
+
+					lights[currentLight + light].setBrightnessSmooth(lightValue, sampleTime);
 				}
 			}
 
-			if (bWithDisastrousPeace) {
-				for (int light = 0; light < 2; ++light) {
-					drawLight(LIGHT_FX + light,
-						anuli::fxModeLights[static_cast<int>(fxModel)][light], bIsTrianglePulse, sampleTime);
-				}
-			} else {
-				for (int light = 0; light < 2; ++light) {
-					lights[LIGHT_FX + light].setBrightnessSmooth(0.f, sampleTime);
-				}
+			for (int light = 0; light < 2; ++light) {
+				float lightValue = bWithDisastrousPeace && (anuli::fxModeLights[static_cast<int>(fxModel)][light] == LIGHT_ON ||
+					(anuli::fxModeLights[static_cast<int>(fxModel)][light] == LIGHT_BLINK && bIsTrianglePulse)) ?
+					kSanguineButtonLightValue : 0.f;
+				lights[LIGHT_FX + light].setBrightnessSmooth(lightValue, sampleTime);
 			}
 
 			lights[LIGHT_POLYPHONY + 0].setBrightness(polyphonyMode <= 3 ? 1.f : 0.f);
@@ -439,26 +433,6 @@ struct Anuli : SanguineModule {
 			strummingFlagCounter = kLightsFrequency;
 			strummingFlagInterval = 0;
 		}
-	}
-
-	void drawLight(const int lightNum, const LightModes lightMode, const bool trianglePulse, const float sampleTime) {
-		float lightValue;
-
-		switch (lightMode) {
-		case LIGHT_ON:
-			lightValue = 1.f;
-			break;
-
-		case LIGHT_BLINK:
-			lightValue = static_cast<float>(trianglePulse);
-			break;
-
-		default:
-			lightValue = 0.f;
-			break;
-		}
-
-		lights[lightNum].setBrightnessSmooth(lightValue, sampleTime);
 	}
 
 	json_t* dataToJson() override {
