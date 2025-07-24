@@ -1,8 +1,31 @@
+# Next version
+
+## Fixes
+
+- Anuli: FX button light didn't follow plugin button light standards.
+
+- Funes: custom data not loading under certain conditions.
+
+- Nodi: wrong channel indicator light colors when morse code easter egg is activated.
+
+## Additions
+
+- Nodi family: display channel also affects the big knob's light.
+
+## Changes
+
+- Contextus: make synthesis models light color palette more distinctive.
+
+
+---
+
 # 2.6.8
 
 ## Additions
 
 - Developers: integrate Oksami's MetaModule compatibility changes.
+
+- Plugin: MetaModule exclusive faceplates.
 
 - Scalaria: MetaModule: use special faceplate with regular LEDs.
 
